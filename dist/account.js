@@ -63,7 +63,7 @@ export function initAccount({storageKey, backend = accountBackend}) {
     }
     if (!backend.configured) {
       $('accountPassword').value = '';
-      $('accountMessage').textContent = '待传输：账户服务尚未连接，尚未完成登录或注册。密码已清除；请继续使用本地存档。';
+      $('accountMessage').textContent = '待传输：账户服务尚未连接，尚未完成登录或注册。密码已清除；连接后请重新填写，岛屿记录会继续保存在本地。';
       showSyncStatus();
       return;
     }
