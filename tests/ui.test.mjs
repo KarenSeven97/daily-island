@@ -118,6 +118,37 @@ test('light settings persist; private local storage information is accessible',a
   const h=await harness();try{h.click('lightButton');h.light('night');assert.equal(h.get('scene').dataset.light,'night');assert.equal(h.state().preferences.lighting,'night');h.click('lightClose');h.click('privacyInfo');assert.match(h.get('modalContent').innerHTML,/不提供云同步/);}finally{h.cleanup();}
 });
 
+test('guest account window stays pending and never stores entered credentials',async()=>{
+  const h=await harness();try{
+    h.click('accountButton');
+    assert.equal(h.get('accountDialog').open,true);
+    assert.match(h.get('accountSyncStatus').textContent,/待传输/);
+    h.get('accountUsername').value='island-friend';
+    h.get('accountPassword').value='private-pass-123';
+    h.get('accountForm').dispatch('submit');
+    assert.match(h.get('accountMessage').textContent,/尚未完成登录或注册/);
+    assert.equal(h.get('accountPassword').value,'');
+    assert.deepEqual([...h.storage.keys()],[KEY]);
+    assert.doesNotMatch(h.storage.get(KEY),/island-friend|private-pass-123/);
+    h.click('accountGuest');
+    h.action('addS');h.submit('访客任务','S');
+    assert.equal(h.state().days[localDate()].tasks[0].name,'访客任务');
+  }finally{h.cleanup();}
+});
+
+test('registration tab remains pending without a backend and local save survives refresh',async()=>{
+  const h=await harness();try{
+    h.click('accountButton');h.click('accountSignUpTab');
+    assert.equal(h.get('accountSubmit').textContent,'注册');
+    h.get('accountUsername').value='new-islander';
+    h.get('accountPassword').value='another-pass-123';
+    h.get('accountForm').dispatch('submit');
+    assert.match(h.get('accountMessage').textContent,/待传输/);
+    assert.equal(h.get('accountPassword').value,'');
+    assert.doesNotMatch(h.storage.get(KEY),/new-islander|another-pass-123/);
+  }finally{h.cleanup();}
+});
+
 test('new terrain animates once; selection does not replay growth or save visual state',async()=>{
   const db=freshDB(),d=ensureDay(db,localDate()),s=addTask(d,'点亮灯塔','S'),b=addTask(d,'整理桌面','B');startDay(d);
   const h=await harness(db);try{

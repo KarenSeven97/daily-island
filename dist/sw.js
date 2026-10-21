@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daily-island-shell-20261021-1';
+const CACHE_NAME = 'daily-island-shell-20261021-2';
 const BASE_URL = new URL('./', self.registration.scope);
 const SHELL_FILES = [
   './',
@@ -9,6 +9,9 @@ const SHELL_FILES = [
   './icon-lighthouse-192.png',
   './icon-lighthouse-512.png',
   './actor-depth.js',
+  './account-backend.js',
+  './account.css',
+  './account.js',
   './app.js',
   './coast.js',
   './detail-position.js',

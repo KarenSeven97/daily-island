@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icon-lighthouse-180.png">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./style.css">
-  <link rel="stylesheet" href="./visual.css"><link rel="stylesheet" href="./journal.css"><script type="module" src="./app.js"></script>
+  <link rel="stylesheet" href="./visual.css"><link rel="stylesheet" href="./journal.css"><link rel="stylesheet" href="./account.css"><script type="module" src="./app.js"></script>
   <script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}),{once:true});</script>
 </head>
 <body>
@@ -17,7 +17,7 @@
   <header class="site-header">
     <a class="brand" href="./" aria-label="每日岛屿首页"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24L20 15 36 24 20 33Z" fill="#93b38a"/><path d="M4 24L20 33 36 24V29L20 38 4 29Z" fill="#bdac8c"/><path d="M19 22V5L30 9 19 14" stroke="#44756c" stroke-width="2.5" fill="#c99c79"/></svg><span>每日岛屿<small>DAILY ISLAND</small></span></a>
     <nav class="main-nav" aria-label="主要导航"><button id="todayNav" class="nav-button active">今日岛屿</button><button id="historyNav" class="nav-button">岛屿手记 <span id="historyCount">0</span></button></nav>
-    <div class="header-tools"><button id="lightButton" class="icon-button" aria-label="光照设置" title="光照设置" aria-expanded="false" aria-controls="lightPanel"></button><button id="helpButton" class="icon-button" aria-label="玩法说明" title="玩法说明"></button>
+    <div class="header-tools"><button id="accountButton" class="account-button" type="button" aria-label="账户" aria-haspopup="dialog" aria-controls="accountDialog"><span>账户</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-4 3-6 7-6s6.5 2 7 6"/></svg></button><button id="lightButton" class="icon-button" aria-label="光照设置" title="光照设置" aria-expanded="false" aria-controls="lightPanel"></button><button id="helpButton" class="icon-button" aria-label="玩法说明" title="玩法说明"></button>
       <section id="lightPanel" class="light-popover" role="region" aria-labelledby="lightTitle" hidden>
         <div class="light-title-row"><div><p class="panel-eyebrow">A LITTLE SUNSHINE</p><h2 id="lightTitle">留住喜欢的光</h2></div><button id="lightClose" class="icon-button" aria-label="关闭光照设置">×</button></div>
         <div class="light-readout"><strong id="lightTime">12:00</strong><span id="lightModeLabel">跟随设备时间</span></div>
@@ -52,6 +52,16 @@
   </main>
 </div>
 <dialog id="modal" aria-labelledby="modalTitle"><div id="modalContent"></div></dialog>
+<dialog id="accountDialog" class="account-dialog" aria-labelledby="accountTitle">
+  <button id="accountClose" class="account-close" type="button" aria-label="关闭账户窗口">×</button>
+  <p class="account-eyebrow">YOUR LITTLE ISLAND</p><h2 id="accountTitle">留一盏归来的灯</h2>
+  <p class="account-intro">现在可以继续作为访客使用。你的岛屿仍会自动保存在这个浏览器。</p>
+  <div class="account-tabs" role="tablist" aria-label="账户操作"><button id="accountSignInTab" type="button" role="tab" aria-selected="true" aria-controls="accountForm">登录</button><button id="accountSignUpTab" type="button" role="tab" aria-selected="false" aria-controls="accountForm">注册</button></div>
+  <form id="accountForm"><label for="accountUsername">用户名</label><input id="accountUsername" name="username" type="text" autocomplete="username" maxlength="40" required><label for="accountPassword">密码</label><input id="accountPassword" name="password" type="password" autocomplete="current-password" minlength="8" required><button id="accountSubmit" type="submit">登录</button></form>
+  <p id="accountMessage" class="account-message" role="status" aria-live="polite">账户服务待连接；此处不会创建或验证账号。</p>
+  <p id="accountSyncStatus" class="account-sync-status">本地记录：待传输</p>
+  <button id="accountGuest" class="account-guest" type="button">继续作为访客</button>
+</dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <noscript><div class="noscript">请启用 JavaScript 以规划任务和探索岛屿。</div></noscript>
 </body></html>

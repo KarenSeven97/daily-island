@@ -7,6 +7,7 @@ import {ACTOR_LANE,placeActor} from './actor-depth.js';
 import {createIdle} from './idle.js';
 import {detailPosition} from './detail-position.js';
 import {createJournal} from './journal.js';
+import {initAccount,noteLocalSave} from './account.js';
 const $=id=>document.getElementById(id),KEY='daily-island-v1';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icons={sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4L19 5"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 8.5a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4M12 16v.2"/>',plus:'<path d="M12 5v14M5 12h14"/>',arrow:'<path d="M5 12h14m-5-5 5 5-5 5"/>',back:'<path d="M19 12H5m5-5-5 5 5 5"/>',check:'<path d="m5 12 4 4L19 6"/>',flag:'<path d="M5 21V3m0 0c5-4 9 4 14 0v10c-5 4-9-4-14 0"/>',lock:'<rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>',leaf:'<path d="M19 3C5 3 1 14 8 18s14-3 11-15ZM5 21 16 8"/>',edit:'<path d="m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-5-5L4 14ZM4 14l5 5"/>',close:'<path d="m6 6 12 12M18 6 6 18"/>',trash:'<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',book:'<path d="M12 5C7 2 4 4 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1Zm0 0v15"/>',moon:'<path d="M20 15A9 9 0 0 1 9 3a9 9 0 1 0 11 12Z"/>',spark:'<path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5ZM20 2v4m-2-2h4"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.2"/>'};
@@ -25,7 +26,7 @@ const journal=createJournal({root:$('journalView'),getDB:()=>db,getToday:()=>tod
 function notify(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(notify.timer);notify.timer=setTimeout(()=>$('toast').classList.remove('show'),3200);}
 function save(){
   if(storageError){$('saveStatus').textContent='本次更改尚未保存';$('storageWarning').hidden=false;$('storageWarning').textContent=storageError;return;}
-  try {localStorage.setItem(KEY,JSON.stringify(db));$('saveStatus').textContent='已保存在此浏览器';}
+  try {localStorage.setItem(KEY,JSON.stringify(db));$('saveStatus').textContent='已保存在此浏览器';noteLocalSave(db);}
   catch { $('saveStatus').textContent='本次更改尚未保存';$('storageWarning').hidden=false;$('storageWarning').textContent='浏览器未能保存数据。请保持页面打开，并允许此网站使用本地存储。'; }
 }
 function run(fn){try {fn();save();render();} catch(e){notify(e.message);}}
@@ -204,5 +205,6 @@ setInterval(()=>{
 },11000);
 window.addEventListener('storage',e=>{if(e.key!==KEY||!e.newValue)return;try{const incoming=validateDB(JSON.parse(e.newValue));if($('modal').open)closeModal();lightControl.close();db=incoming;rollover(db,today);stopWalking();player={x:0,y:0};form=null;selectedTile=null;detailTile=null;lastTileTap=null;render();lightControl.refresh();notify('已同步此浏览器另一个标签页的最新记录。');}catch{notify('另一个标签页的记录无法读取，请保留当前页面。');}});
 window.addEventListener('resize',positionTileDetail);
+initAccount({storageKey:KEY});
 save();render();
 
