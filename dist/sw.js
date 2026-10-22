@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daily-island-shell-20261021-2';
+const CACHE_NAME = 'daily-island-shell-20261023-1';
 const BASE_URL = new URL('./', self.registration.scope);
 const SHELL_FILES = [
   './',
@@ -12,6 +12,9 @@ const SHELL_FILES = [
   './account-backend.js',
   './account.css',
   './account.js',
+  './cloud-sync.js',
+  './supabase-config.js',
+  './supabase-sdk.js',
   './app.js',
   './coast.js',
   './detail-position.js',
@@ -75,4 +78,3 @@ self.addEventListener('fetch', event => {
     }
   })());
 });
-

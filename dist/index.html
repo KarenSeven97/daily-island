@@ -56,13 +56,15 @@
   <button id="accountClose" class="account-close" type="button" aria-label="关闭账户窗口">×</button>
   <p class="account-eyebrow">YOUR LITTLE ISLAND</p><h2 id="accountTitle">留一盏归来的灯</h2>
   <p class="account-intro">现在可以继续作为访客使用。你的岛屿仍会自动保存在这个浏览器。</p>
-  <div class="account-tabs" role="tablist" aria-label="账户操作"><button id="accountSignInTab" type="button" role="tab" aria-selected="true" aria-controls="accountForm">登录</button><button id="accountSignUpTab" type="button" role="tab" aria-selected="false" aria-controls="accountForm">注册</button></div>
-  <form id="accountForm"><label for="accountUsername">用户名</label><input id="accountUsername" name="username" type="text" autocomplete="username" maxlength="40" required><label for="accountPassword">密码</label><input id="accountPassword" name="password" type="password" autocomplete="current-password" minlength="8" required><button id="accountSubmit" type="submit">登录</button></form>
-  <p id="accountMessage" class="account-message" role="status" aria-live="polite">账户服务待连接；此处不会创建或验证账号。</p>
-  <p id="accountSyncStatus" class="account-sync-status">本地记录：待传输</p>
+  <div id="accountTabs" class="account-tabs" role="tablist" aria-label="账户操作"><button id="accountSignInTab" type="button" role="tab" aria-selected="true" aria-controls="accountForm">登录</button><button id="accountSignUpTab" type="button" role="tab" aria-selected="false" aria-controls="accountForm">注册</button></div>
+  <form id="accountForm"><div id="accountNicknameField" class="account-field" hidden><label for="accountUsername">昵称（选填）</label><input id="accountUsername" name="nickname" type="text" autocomplete="nickname" maxlength="40"></div><label for="accountEmail">邮箱</label><input id="accountEmail" name="email" type="email" autocomplete="username" required><label for="accountPassword">密码</label><input id="accountPassword" name="password" type="password" autocomplete="current-password" minlength="1" required><button id="accountSubmit" type="submit">登录</button></form>
+  <div id="accountSession" hidden><p id="accountIdentity" class="account-identity"></p><div class="account-session-actions"><button id="accountRetry" type="button">立即同步</button><button id="accountSignOut" type="button">退出登录</button></div></div>
+  <p id="accountMessage" class="account-message" role="status" aria-live="polite">登录后可将本地记录保存到你的云端账户。</p>
+  <p id="accountSyncStatus" class="account-sync-status" role="status" aria-live="polite">访客 · 登录后可传输本地记录</p>
+  <div id="accountConflict" class="account-conflict" hidden><p id="accountConflictText"></p><button id="accountUseCloud" type="button">使用云端记录（本地先备份）</button><button id="accountUseLocal" type="button">保留本地并上传（云端先备份）</button></div>
+  <div class="account-exports"><button id="accountExport" type="button">导出本地存档</button><button id="accountBackup" type="button" hidden>下载最近切换前备份</button></div>
   <button id="accountGuest" class="account-guest" type="button">继续作为访客</button>
 </dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <noscript><div class="noscript">请启用 JavaScript 以规划任务和探索岛屿。</div></noscript>
 </body></html>
-

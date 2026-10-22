@@ -7,8 +7,10 @@ import {project} from '../dist/scene.js';
 import {ACTOR_LANE} from '../dist/actor-depth.js';
 import {sunPoint} from '../dist/lighting.js';
 import {shiftDate,weekDates} from '../dist/journal-model.js';
+import {accountBackend} from '../dist/account-backend.js';
 const KEY='daily-island-v1';let serial=0;
-async function harness(initial=null){
+async function harness(initial=null,backendOverrides={configured:false}){
+  const originalBackend={...accountBackend};Object.assign(accountBackend,backendOverrides);
   const originals=Object.fromEntries(['document','window','localStorage','setTimeout','clearTimeout','setInterval','requestAnimationFrame','cancelAnimationFrame'].map(k=>[k,globalThis[k]]));
   const elements=new Map(),timers=new Map(),frames=new Map(),intervals=[],storage=new Map(initial?[[KEY,JSON.stringify(initial)]]:[]);let timer=0,frame=0,clock=0;
   const dataKey=name=>name.slice(5).replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());
@@ -65,7 +67,7 @@ async function harness(initial=null){
   globalThis.localStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)};
   globalThis.setTimeout=(fn)=>{timers.set(++timer,fn);return timer;};globalThis.clearTimeout=id=>timers.delete(id);globalThis.setInterval=(fn,ms)=>{intervals.push({fn,ms});return intervals.length;};
   globalThis.requestAnimationFrame=fn=>{frames.set(++frame,fn);return frame;};globalThis.cancelAnimationFrame=id=>frames.delete(id);
-  const cleanup=()=>{for(const [k,v]of Object.entries(originals)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}};
+  const cleanup=()=>{Object.assign(accountBackend,originalBackend);for(const [k,v]of Object.entries(originals)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}};
   try{await import(`../dist/app.js?check=${++serial}`);}catch(error){cleanup();throw error;}
   return {get,storage,timers,intervals,frames,state:()=>JSON.parse(storage.get(KEY)),click:id=>get(id).dispatch('click'),
     advance(ms){const end=clock+ms;while(clock<end){clock=Math.min(end,clock+16);const pending=[...frames.values()];frames.clear();pending.forEach(fn=>fn(clock));}},
@@ -115,14 +117,15 @@ test('edit, delete, grade restrictions and ordinary addition after departure are
   const h=await harness();try{h.action('addS');h.submit('原任务','S');let d=h.state().days[localDate()];h.action('edit',{id:d.tasks[0].id});h.submit('更新任务','S');h.action('addOrdinary');h.submit('将删除','B');d=h.state().days[localDate()];h.action('delete',{id:d.tasks[1].id});assert.equal(h.state().days[localDate()].tasks.length,1);h.action('start');h.modal('close');h.action('addOrdinary');h.submit('新行动','A');d=h.state().days[localDate()];assert.equal(d.tasks.length,2);assert.equal(d.tasks[0].name,'更新任务');assert.equal(d.themeId,'coastal-garden');}finally{h.cleanup();}
 });
 test('light settings persist; private local storage information is accessible',async()=>{
-  const h=await harness();try{h.click('lightButton');h.light('night');assert.equal(h.get('scene').dataset.light,'night');assert.equal(h.state().preferences.lighting,'night');h.click('lightClose');h.click('privacyInfo');assert.match(h.get('modalContent').innerHTML,/不提供云同步/);}finally{h.cleanup();}
+  const h=await harness();try{h.click('lightButton');h.light('night');assert.equal(h.get('scene').dataset.light,'night');assert.equal(h.state().preferences.lighting,'night');h.click('lightClose');h.click('privacyInfo');assert.match(h.get('modalContent').innerHTML,/访客记录只保存在本地/);}finally{h.cleanup();}
 });
 
 test('guest account window stays pending and never stores entered credentials',async()=>{
   const h=await harness();try{
     h.click('accountButton');
     assert.equal(h.get('accountDialog').open,true);
-    assert.match(h.get('accountSyncStatus').textContent,/待传输/);
+    assert.match(h.get('accountSyncStatus').textContent,/访客/);
+    h.get('accountEmail').value='friend@example.com';
     h.get('accountUsername').value='island-friend';
     h.get('accountPassword').value='private-pass-123';
     h.get('accountForm').dispatch('submit');
@@ -136,16 +139,46 @@ test('guest account window stays pending and never stores entered credentials',a
   }finally{h.cleanup();}
 });
 
-test('registration tab remains pending without a backend and local save survives refresh',async()=>{
+test('registration tab remains pending without a backend and retains local save',async()=>{
   const h=await harness();try{
     h.click('accountButton');h.click('accountSignUpTab');
     assert.equal(h.get('accountSubmit').textContent,'注册');
     h.get('accountUsername').value='new-islander';
+    h.get('accountEmail').value='new@example.com';
     h.get('accountPassword').value='another-pass-123';
     h.get('accountForm').dispatch('submit');
     assert.match(h.get('accountMessage').textContent,/待传输/);
     assert.equal(h.get('accountPassword').value,'');
     assert.doesNotMatch(h.storage.get(KEY),/new-islander|another-pass-123/);
+  }finally{h.cleanup();}
+});
+
+test('verified login uploads local data; logout keeps the same island and clears the form password',async()=>{
+  const uploaded=[],session={user:{id:'alice',email:'friend@example.com'}};
+  const h=await harness(null,{configured:true,watchSession:async()=>()=>{},restoreSession:async()=>null,
+    signIn:async()=>({session}),signOut:async()=>{},readSave:async()=>null,
+    writeSave:async(id,snapshot)=>{uploaded.push({id,snapshot});return {version:1};}});
+  try{
+    h.action('addS');h.submit('登录前的计划','S');const before=h.storage.get(KEY);
+    h.get('accountEmail').value='friend@example.com';h.get('accountPassword').value='test-only-password';
+    h.get('accountForm').dispatch('submit');await new Promise(setImmediate);
+    assert.equal(h.get('accountForm').hidden,true);assert.equal(h.get('accountPassword').value,'');
+    assert.equal(uploaded.length,1);assert.deepEqual(uploaded[0].snapshot,JSON.parse(before));
+    assert.equal(h.storage.get(KEY),before);h.click('accountSignOut');await new Promise(setImmediate);
+    assert.equal(h.get('accountForm').hidden,false);assert.equal(h.storage.get(KEY),before);
+    assert.doesNotMatch(JSON.stringify([...h.storage]),/test-only-password/);
+  }finally{h.cleanup();}
+});
+
+test('email confirmation pending does not pretend to log in or transfer island data',async()=>{
+  let uploads=0;
+  const h=await harness(null,{configured:true,watchSession:async()=>()=>{},restoreSession:async()=>null,
+    signUp:async()=>({session:null}),readSave:async()=>{uploads++;return null;}});
+  try{
+    h.click('accountSignUpTab');h.get('accountEmail').value='new@example.com';h.get('accountPassword').value='test-only-password';
+    h.get('accountForm').dispatch('submit');await new Promise(setImmediate);
+    assert.match(h.get('accountMessage').textContent,/确认邮件/);assert.equal(h.get('accountForm').hidden,false);
+    assert.equal(uploads,0);assert.equal(h.get('accountPassword').value,'');
   }finally{h.cleanup();}
 });
 
@@ -403,4 +436,3 @@ test('map and detail card enter an existing historical island without changing i
     assert.equal(h.storage.get(KEY),saved);
   }finally{h.cleanup();}
 });
-
