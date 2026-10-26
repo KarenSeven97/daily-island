@@ -9,7 +9,11 @@ export function prepareLocalReset() { resetLocally(); }
 export function initAccount({storageKey, backend = accountBackend}) {
   const $ = id => document.getElementById(id), dialog = $('accountDialog');
   let mode = 'signIn', session = null, busy = false, authRevision = 0, syncTimer;
-  const cloud = createCloudSync({backend, storage: localStorage, storageKey, onState: renderSync});
+  const withLock = globalThis.navigator?.locks?.request
+    ? task => navigator.locks.request('daily-island-cloud-sync-v1', {mode: 'exclusive'}, task)
+    : task => task();
+  const cloud = createCloudSync({backend, storage: localStorage, storageKey, onState: renderSync, withLock,
+    onLocalChange: () => { if (window.location?.reload) window.location.reload(); }});
   resetLocally = () => cloud.prepareLocalReset();
   function renderSync(state) {
     const labels = {guest: '访客 · 登录后可传输本地记录', pending: '本地记录：待传输', syncing: '本地已保存 · 正在传输', synced: '已上传云端 · 本地保留', conflict: '本地与云端记录不同 · 待选择', 'other-account': '此浏览器记录属于其他账户 · 待选择'};
